@@ -1,0 +1,338 @@
+
+
+
+import java.util.Scanner;
+
+/**
+ * Collects and manages tooth information for family members and performs various operations
+ * on the data, like printing records, extracting teeth, and calculating root canal indices.
+ *
+ * @author Michaela Moss
+ * @see DentalRecords
+ */
+
+public class DentalRecords {
+    /**
+     * Global Scanner object to use keyboard
+     */
+    private static final Scanner keyboard = new Scanner(System.in);
+    /**
+     * Maximum number of people in the family that the program can handle
+     */
+    private static final int MAX_PEOPLE = 6;
+    /**
+     * Maximum number of teeth each family member can have in either upper or lower row
+     */
+    private static final int MAX_TEETH = 8;
+    /**
+     * Array to store tooth information for each family member, split into upper and lower rows
+     */
+    private static final char [][][] teethRecords = new char[MAX_PEOPLE][2][MAX_TEETH];
+    /**
+     * Array to store the names of family members
+     */
+    private static final String [] names = new String[MAX_PEOPLE];
+    /**
+     * Tracks the number of family members that will be entered by the user
+     */
+    private static int familySize;
+    /**
+     * Stores current menu option chosen by user
+     */
+    private static char option;
+    /**
+     * Stores the index of the current family member, used in operations like extraction
+     */
+    private static int memberIndex = -1;
+
+    /**
+     * Main method to run the program, which greets the user, takes family data, and provides
+     * a menu to view records, perform extractions, calculate root canals, or exit.
+     *
+     * @param args command-line arguments (not used in this program)
+     */
+
+    public static void main (String[] args){
+        System.out.println("Welcome to the Floridian Tooth Records");
+        System.out.println("--------------------------------------");
+
+        familySize = getValidFamilySize();
+
+        for (int index = 0; index < familySize; index++) {
+            System.out.print("Please enter the name for family member " + (index + 1) + "   : ");
+            names[index] = keyboard.nextLine().toUpperCase();
+            names[index] = names[index].substring(0, 1).toUpperCase() + names[index].substring(1).toLowerCase();
+
+
+            System.out.print("Please enter the uppers for " + names[index] + "       : ");
+            teethRecords[index][0] = getValidTeeth();
+
+
+            System.out.print("Please enter the lowers for " + names[index] + "       : ");
+            teethRecords[index][1] = getValidTeeth();
+        }// end of for loop
+
+
+        do {
+            System.out.println("(P)rint, (E)xtract, (R)oot, e(X)it          : ");
+            option = keyboard.next().toUpperCase().charAt(0);
+            keyboard.nextLine();
+
+
+            switch (option) {
+                case 'P' -> printFamilyTeethRecords();
+                case 'E' -> {
+                    System.out.print("Which family member                         : ");
+                    while (memberIndex == -1) {
+                        String memberName = keyboard.nextLine();
+                        memberIndex = findMemberIndex(memberName);
+
+                        if (memberIndex == -1) {
+                            System.out.println("Invalid family member, try again            : ");
+                        }
+                    }
+
+                    extractTooth(memberIndex);
+                    memberIndex = -1;
+                }// end of case E
+
+
+                case 'R' -> reportRootCanalIndices();
+                case 'X' -> System.out.println("\nExiting the Floridian Tooth Records :-)");
+                default -> System.out.println("Invalid menu option, try again");
+            }// end of switch
+
+
+        } while (option != 'X'); // end of menu
+
+
+    }// end of main
+
+    /**
+     * Prompts the user to enter the number of people in the family, making sure it's a valid integer
+     * within a set range. Keeps asking until a good answer is provided.
+     *
+     * @return the family size as an integer, between 1 and `MAX_PEOPLE`.
+     */
+
+    private static int getValidFamilySize() {
+        int size = 0;
+        boolean validInput = false;
+
+        System.out.print("Please enter number of people in the family : ");
+        while (!validInput) {
+            if (keyboard.hasNextInt()) {
+                size = keyboard.nextInt();
+                keyboard.nextLine();
+                if (size >= 1 && size <= MAX_PEOPLE) {
+                    validInput = true;
+                } else {
+                    System.out.print("Invalid number of people, try again         : ");
+                }
+            } else {
+                System.out.print("Invalid input, please enter a number         : ");
+                keyboard.nextLine();
+            }
+        }// end of while loop
+        return size;
+    } // end of getValidFamilySize
+
+    /**
+     * Asks the user to enter tooth types for a family member, checking that they're valid types ('I', 'B', 'M')
+     * and that the total count doesn't go over `MAX_TEETH`. Keeps asking until everything checks out.
+     *
+     * @return a character array of valid tooth types entered by the user.
+     */
+
+    private static char[] getValidTeeth() {
+        char[] teeth = new char[MAX_TEETH];
+        boolean isValid;
+        char tooth;
+
+
+        do {
+            String input = keyboard.nextLine().toUpperCase();
+
+            if (input.length() > MAX_TEETH) {
+                System.out.println("Too many teeth, try again                   : ");
+                isValid = false;
+            } else {
+                isValid = true;
+
+
+                for (int i = 0; i < input.length(); i++) {
+                    tooth = input.charAt(i);
+                    if (tooth != 'I' && tooth != 'B' && tooth != 'M') {
+                        System.out.println("Invalid teeth types, try again              : ");
+                        isValid = false;
+                        break;
+                    }
+                }
+                if (isValid) {
+                    teeth = input.toCharArray();
+                }
+            }
+        } while (!isValid);
+
+
+        return teeth;
+    }// end of getValidTeeth
+
+    /**
+     * Prints each family member's teeth records, showing their upper and lower rows of teeth with positions.
+     * Skips any empty entries and displays each tooth with its position number.
+     */
+
+    private static void printFamilyTeethRecords() {
+        char tooth;
+
+        for (int index = 0; index < familySize; index++) {
+            System.out.println(names[index]);
+
+            System.out.print("  Uppers:  ");
+            int toothNum = 1;
+            for (int toothIndex = 0; toothIndex < teethRecords[index][0].length; toothIndex++) {
+                tooth = teethRecords[index][0][toothIndex];
+                if (tooth != '\0' && tooth != ' ') {
+                    System.out.printf("%d:%s  ", toothNum, tooth);
+                    toothNum++;
+                }
+            }// end of for loop
+
+            System.out.println();
+
+            System.out.print("  Lowers:  ");
+            toothNum = 1;
+            for (int toothIndex = 0; toothIndex < teethRecords[index][1].length; toothIndex++) {
+                tooth = teethRecords[index][1][toothIndex];
+                if (tooth != '\0' && tooth != ' ') {
+                    System.out.printf("%d:%s  ", toothNum, tooth);
+                    toothNum++;
+                }
+            }
+            System.out.println();
+        }
+    }// end of printFamilyTeethRecords
+
+    /**
+     * Searches for a family member’s name in the list (case-insensitive).
+     *
+     * @param name the name to look for.
+     * @return the index of the family member if found, or -1 if not found.
+     */
+
+    private static int findMemberIndex(String name) {
+
+        for (int index = 0; index < familySize; index++) {
+            if (names[index].equalsIgnoreCase(name)) {
+                return index;
+            }
+        }//end of for loop
+        return -1;
+    }// end of findMemberIndex
+
+    /**
+     * Lets the user select and mark a tooth as missing ('M') for a specific family member.
+     * First, it asks the user to choose the layer (upper or lower) and then to pick a valid tooth number.
+     * Keeps asking if the input is invalid or if the chosen tooth is already missing.
+     *
+     * @param memberIndex the index of the family member in the `teethRecords` array.
+     */
+
+    private static void extractTooth(int memberIndex) {
+        char layer;
+        int layerIndex;
+        int max_tooth;
+        int toothNum;
+
+        do {
+            System.out.print("Which tooth layer (U)pper or (L)ower: ");
+            layer = keyboard.next().toUpperCase().charAt(0);
+            keyboard.nextLine();
+            if (layer != 'U' && layer != 'L') {
+                System.out.println("Invalid layer, try again");
+            }
+        } while (layer != 'U' && layer != 'L');
+
+
+        layerIndex = (layer == 'U') ? 0 : 1;
+        max_tooth = teethRecords[memberIndex][layerIndex].length;
+        System.out.print("Which tooth number: ");
+        toothNum = keyboard.nextInt() - 1;
+        keyboard.nextLine();
+
+        while (toothNum < 0 || toothNum >= max_tooth){
+            System.out.println("Invalid tooth number, try again");
+            toothNum = keyboard.nextInt() - 1;
+            keyboard.nextLine();
+            //return;
+        }// end of while
+
+
+
+        while (teethRecords[memberIndex][layerIndex][toothNum] == 'M') {
+            System.out.println("Missing tooth, try again");
+            toothNum = keyboard.nextInt() - 1;
+            while (toothNum < 0 || toothNum >= max_tooth)
+            {
+                System.out.println("Invalid tooth number, try again");
+                toothNum = keyboard.nextInt() - 1;
+
+            }// inner while
+        }// outer while
+
+
+        teethRecords[memberIndex][layerIndex][toothNum] = 'M';
+        System.out.println("Tooth extracted successfully.");
+
+    }  // end of extractTooth
+
+
+    /**
+     * Counts different types of teeth (incisors, bicuspids, and missing teeth) in the family
+     * and calculates possible root canal indices based on these counts.
+     *
+     * This method goes through each family member's teeth records, tallying the number of
+     * each tooth type. Using these counts, it calculates two potential "root canal" solutions.
+     * If there’s no real solution, it reports that instead.
+     */
+
+    private static void reportRootCanalIndices() {
+        int incisors = 0;
+        int bicuspids = 0;
+        int missing = 0;
+        double innerCalculation;
+        double root1;
+        double root2;
+
+
+        for (int personIndex = 0; personIndex < familySize; personIndex++) {
+            for (int layerIndex = 0; layerIndex < 2; layerIndex++) {
+                for (char tooth : teethRecords[personIndex][layerIndex]) {
+                    switch (tooth) {
+                        case 'I' -> incisors++;
+                        case 'B' -> bicuspids++;
+                        case 'M' -> missing++;
+                    } // end of switch (tooth)
+                } // end of for loop (tooth in layer)
+            } // end of for loop (layer index)
+        } // end of for loop (personindex)
+
+        innerCalculation = bicuspids * bicuspids + 4 * incisors * missing;
+
+        if (innerCalculation < 0) {
+            System.out.println("No real root canal solutions");
+        } else {
+            root1 = (-bicuspids + Math.sqrt(innerCalculation)) / (2 * incisors);
+            root2 = (-bicuspids - Math.sqrt(innerCalculation)) / (2 * incisors);
+            System.out.printf("One root canal at %.2f\nAnother root canal at %.2f\n", root1, root2);
+        }
+    }// end of reportRootCanalIndicies
+
+
+} // end of public class
+
+
+
+
+
